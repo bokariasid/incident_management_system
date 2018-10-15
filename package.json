@@ -5,7 +5,8 @@
     "description": "Simple example of incident management system, implementing RESTful API with Node.js and passport",
     "private": true,
     "scripts": {
-        "start": "node ./bin/www"
+        "start": "node ./bin/www",
+        "heroku-postbuild":"node generateData.js"
     },
     "jshintConfig": {
         "curly": true,
