@@ -122,7 +122,7 @@ var ticketAssigner = () => {
 // we can use config values to implement a better auto escalation scenario.
 var autoEscalator = () => {
     console.log("---------------------");
-    console.log("Escalating tickets to a random resolver");
+    console.log("Escalating tickets to a random resolvers");
     var db = require(libs + 'db/mongoose');
     var asyncLib = require('async');
     var Ticket = require(libs + 'model/ticket');
