@@ -55,12 +55,10 @@ passport.use(new BearerStrategy(
             if (err) {
             	return done(err);
             }
-
             if (!token) {
             	return done(null, false);
             }
             if( Math.round((Date.now()-token.created)/1000) > process.env.TOKEN_TTL ) {
-
                 AccessToken.remove({ token: accessToken }, (err) => {
                     if (err) {
                     	return done(err);

@@ -13,6 +13,7 @@ let oauth2_resolver = require('./auth/resolver_oauth2');
 var api = require('./routes/api');
 var users = require('./routes/users');
 var tickets = require('./routes/ticket');
+var resolvers = require('./routes/resolver');
 
 var app = express();
 
@@ -24,11 +25,14 @@ app.use(passport.initialize());
 app.use('/', api);
 app.use('/api', api);
 app.use('/api/users', users);
+// tickets route for users.
 app.use('/api/tickets', passport.authenticate('bearer', { session: false }), tickets);
 // authentication route for users.
 app.use('/api/user/oauth/token', oauth2.token);
 // authentication route for resolvers.
 app.use('/api/resolver/oauth/token', oauth2_resolver.resolver_token);
+// tickets route for resolvers
+app.use('/api/resolver', passport.authenticate('bearer', { session: false }), resolvers);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -49,5 +53,13 @@ app.use((err, req, res, next) => {
     });
     return;
 });
-
+// schedule tasks to be run on the server
+cron.schedule("* * * * *", function() {
+    console.log("---------------------");
+    console.log("Running Cron Job");
+    // fs.unlink("./error.log", err => {
+    //     if (err) throw err;
+    //     console.log("Error file succesfully deleted");
+    // });
+});
 module.exports = app;

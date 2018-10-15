@@ -9,7 +9,7 @@ var remarkSchema = new Schema({
 /**
  * Tickets to be resolved by resolver.
  * Tickets to be created by the user.
- * Status ==> -1 = new Ticket, 1 ==> resolved, 0 ==> escalated
+ * Status ==> -1 = new Ticket, 1 ==> resolved, 0 ==> escalated, 2 ==> assigned
  * @type {Schema}
  */
 var Ticket = new Schema({

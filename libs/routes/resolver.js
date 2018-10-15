@@ -1,17 +1,17 @@
 var express = require('express');
 var router = express.Router();
-
+const moment = require('moment');
 var libs = process.cwd() + '/libs/';
 var log = console;
 var db = require(libs + 'db/mongoose');
 var Ticket = require(libs + 'model/ticket');
 
-// get a list of all the tickets available for the current user.
-router.get('/', (req, res) => {
-	let user_id = req.user.userId;
+// get a list of all the tickets for the current resolver
+router.get('/tickets', (req, res) => {
+	let resolver_id = req.user.userId;
 	// we can implement a first level filter on the basis of ticket statuses.
 	// also we can implement pagination for a better approach in fetching the resolver tickets.
-	Ticket.find({user_id:user_id}, (err, articles) => {
+	Ticket.find({resolver_id:resolver_id}, (err, articles) => {
 		if (!err) {
 			return res.status(200).json(articles).send();
 		} else {
@@ -21,32 +21,8 @@ router.get('/', (req, res) => {
 	});
 });
 
-// create a new ticket.
-router.post('/', (req, res) => {
-	let user_id = req.user.userId;
-	var ticket = new Ticket({
-		title: req.body.title,
-		user_id: user_id,
-		description: req.body.description,
-		status:-1
-	});
-	ticket.save((err) => {
-		if (!err) {
-			log.info("New ticket created with id: %s", ticket.id);
-			return res.status(200).json({status: 'OK',ticket:ticket}).send();
-		} else {
-			if(err.name === 'ValidationError') {
-				res.status(406).json({error: 'Validation error'}).send();
-			} else {
-				res.status(500).json({error: 'Server error'}).send();
-			}
-			log.error('Internal error(%d): %s', res.statusCode, err.message);
-		}
-	});
-});
-
 // get a ticket with a particular id.
-router.get('/:id',(req, res) => {
+router.get('/ticket/:id',(req, res) => {
 	Ticket.findById(req.params.id, (err, ticket) => {
 		if(!ticket) {
 			return res.status(404).json({error: 'Not found'}).send();
@@ -61,19 +37,36 @@ router.get('/:id',(req, res) => {
 });
 
 // update the ticket.
-router.put('/:id', (req, res) => {
+router.put('/ticket/:id', (req, res) => {
 	let ticketId = req.params.id;
 	let requestBody = req.body;
+	let resolver_id = req.user.userId;
 	Ticket.findById(ticketId, (err, ticket) => {
 		if(!ticket) {
 			log.error('Ticket with id: %s Not Found', ticketId);
 			return res.status(404).json({error: 'Not found'}).send();
 		}
-		if(requestBody.title){
-			ticket.title = requestBody.title;
+		let dateString = moment().format('YYYY-MM-DD HH:m:ss');
+		// ticket assigned to the resolver.
+		if(requestBody.assignTicket == 1){
+			ticket.resolver_id = resolver_id;
+			ticket.status = 2;
+			let remark = {
+				resolver_id:resolver_id,
+				remark:'Ticket assigned on '+dateString
+			};
+			ticket.remark = [remark];
 		}
-		if(requestBody.description){
-			ticket.description = requestBody.description;
+		if(requestBody.status == 0){
+			// ticket has been escalated.
+			if(ticket.remark.length == 0){
+				ticket.remark = [requestBody.remark];
+			} else {
+				ticket.remark.push(requestBody.remark);
+			}
+		} else if(requestBody.status == 1) {
+			// ticket has been resolved.
+			ticket.status = 1;
 		}
 		ticket.save((err) => {
 			if (!err) {
