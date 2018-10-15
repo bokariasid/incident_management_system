@@ -6,6 +6,8 @@ var log = console;
 var db = require(libs + 'db/mongoose');
 var Ticket = require(libs + 'model/ticket');
 
+
+// hierarchy of resolvers can also be implemented. to improve the escalation graph scenario
 // get a list of all the tickets for the current resolver
 router.get('/tickets', (req, res) => {
 	let resolver_id = req.user.userId;
