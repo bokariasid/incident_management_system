@@ -8,6 +8,7 @@ var config = require('./config');
 
 var User = require(libs + 'model/user');
 var Resolver = require(libs + 'model/resolver');
+var Ticket = require(libs + 'model/ticket');
 var Client = require(libs + 'model/client');
 var AccessToken = require(libs + 'model/accessToken');
 var RefreshToken = require(libs + 'model/refreshToken');
@@ -80,7 +81,7 @@ let createFakeClient = async () => {
     })
 }
 
-async function clearTokens () {
+async function clearValues () {
     return new Promise((resolve, reject) => {
         AccessToken.deleteMany({}, (err) => {
             if (err) {
@@ -92,7 +93,13 @@ async function clearTokens () {
                     return reject(err);
                     // return console.error(err);
                 }
-                return resolve("tokens cleared");
+                Ticket.deleteMany({}, (err) => {
+                    if (err) {
+                        return reject(err);
+                        // return console.error(err);
+                    }
+                    return resolve("values cleared");
+                });
             });
         });
     });
@@ -106,7 +113,7 @@ let fakeValues = async () => {
         console.log(resolverResponse);
         let clientResponse = await createFakeClient();
         console.log(clientResponse);
-        let clearResponse = await clearTokens();
+        let clearResponse = await clearValues();
         console.log(clearResponse);
         db.disconnect();
         process.exit();
