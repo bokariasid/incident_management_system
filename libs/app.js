@@ -6,8 +6,9 @@ var passport = require('passport');
 
 var libs = process.cwd() + '/libs/';
 require(libs + 'auth/auth');
-
-var oauth2 = require('./auth/oauth2');
+const log = console;
+let oauth2 = require('./auth/oauth2');
+let oauth2_resolver = require('./auth/resolver_oauth2');
 
 var api = require('./routes/api');
 var users = require('./routes/users');
@@ -24,7 +25,10 @@ app.use('/', api);
 app.use('/api', api);
 app.use('/api/users', users);
 app.use('/api/tickets', passport.authenticate('bearer', { session: false }), tickets);
-app.use('/api/oauth/token', oauth2.token);
+// authentication route for users.
+app.use('/api/user/oauth/token', oauth2.token);
+// authentication route for resolvers.
+app.use('/api/resolver/oauth/token', oauth2_resolver.resolver_token);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

@@ -11,6 +11,10 @@
             "username": "myapi",
             "password": "abc1234"
         },
+        "resolver": {
+            "username": "resolver",
+            "password": "abcabc"
+        },
         "client": {
             "name": "Heroku API v1",
             "clientId": "heroku_client",

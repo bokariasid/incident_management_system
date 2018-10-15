@@ -7,6 +7,7 @@ var db = require(libs + 'db/mongoose');
 var config = require('./config');
 
 var User = require(libs + 'model/user');
+var Resolver = require(libs + 'model/resolver');
 var Client = require(libs + 'model/client');
 var AccessToken = require(libs + 'model/accessToken');
 var RefreshToken = require(libs + 'model/refreshToken');
@@ -22,6 +23,29 @@ let createFakeUser = async () => {
                 password: config.get("default:user:password")
             });
             user.save((err, user) => {
+                if(!err) {
+                    return resolve(user);
+                    console.info("New user - %s:%s", user.username, user.password);
+                } else {
+                    return reject(err);
+                }
+            });
+        });
+    });
+    return fakeUserPromise;
+}
+
+let createFakeResolver = async () => {
+    let fakeUserPromise =  new Promise((resolve, reject) => {
+        Resolver.deleteMany({}, (err) => {
+            if(err){
+                return reject(err);
+            }
+            var resolver = new Resolver({
+                username: config.get("default:resolver:username"),
+                password: config.get("default:resolver:password")
+            });
+            resolver.save((err, user) => {
                 if(!err) {
                     return resolve(user);
                     console.info("New user - %s:%s", user.username, user.password);
@@ -74,15 +98,14 @@ async function clearTokens () {
     });
 }
 
-// setTimeout(() => {
-//     db.disconnect();
-// }, 3000);
 let fakeValues = async () => {
-    let userResponse = await createFakeUser();
-    console.log(userResponse);
-    let clientResponse = await createFakeClient();
-    console.log(clientResponse);
     try {
+        let userResponse = await createFakeUser();
+        console.log(userResponse);
+        let resolverResponse = await createFakeResolver();
+        console.log(resolverResponse);
+        let clientResponse = await createFakeClient();
+        console.log(clientResponse);
         let clearResponse = await clearTokens();
         console.log(clearResponse);
         db.disconnect();

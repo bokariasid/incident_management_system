@@ -4,13 +4,14 @@ var ClientPasswordStrategy = require('passport-oauth2-client-password').Strategy
 var BearerStrategy = require('passport-http-bearer').Strategy;
 var libs = process.cwd() + '/libs/';
 var User = require(libs + 'model/user');
+var Resolver = require(libs + 'model/resolver');
 var Client = require(libs + 'model/client');
 var AccessToken = require(libs + 'model/accessToken');
 var RefreshToken = require(libs + 'model/refreshToken');
 
 passport.use(new BasicStrategy(
-    function(username, password, done) {
-        Client.findOne({ clientId: username }, function(err, client) {
+    (username, password, done) => {
+        Client.findOne({ clientId: username }, (err, client) => {
             if (err) {
             	return done(err);
             }
@@ -29,8 +30,8 @@ passport.use(new BasicStrategy(
 ));
 
 passport.use(new ClientPasswordStrategy(
-    function(clientId, clientSecret, done) {
-        Client.findOne({ clientId: clientId }, function(err, client) {
+    (clientId, clientSecret, done) => {
+        Client.findOne({ clientId: clientId }, (err, client) => {
             if (err) {
             	return done(err);
             }
@@ -49,9 +50,8 @@ passport.use(new ClientPasswordStrategy(
 ));
 
 passport.use(new BearerStrategy(
-    function(accessToken, done) {
-        AccessToken.findOne({ token: accessToken }, function(err, token) {
-
+    (accessToken, done) => {
+        AccessToken.findOne({ token: accessToken }, (err, token) => {
             if (err) {
             	return done(err);
             }
@@ -61,7 +61,7 @@ passport.use(new BearerStrategy(
             }
             if( Math.round((Date.now()-token.created)/1000) > process.env.TOKEN_TTL ) {
 
-                AccessToken.remove({ token: accessToken }, function (err) {
+                AccessToken.remove({ token: accessToken }, (err) => {
                     if (err) {
                     	return done(err);
                     }
@@ -69,20 +69,32 @@ passport.use(new BearerStrategy(
 
                 return done(null, false, { message: 'Token expired' });
             }
-
-            User.findById(token.userId, function(err, user) {
-
-                if (err) {
-                	return done(err);
-                }
-
-                if (!user) {
-                	return done(null, false, { message: 'Unknown user' });
-                }
-
-                var info = { scope: '*' };
-                done(null, user, info);
-            });
+            switch(token.type){
+                case "user":
+                    User.findById(token.userId, (err, user) => {
+                        if (err) {
+                            return done(err);
+                        }
+                        if (!user) {
+                            return done(null, false, { message: 'Unknown user' });
+                        }
+                        var info = { scope: '*' };
+                        done(null, user, info);
+                    });
+                    break;
+                case "resolver":
+                    Resolver.findById(token.userId, (err, user) => {
+                        if (err) {
+                            return done(err);
+                        }
+                        if (!user) {
+                            return done(null, false, { message: 'Unknown user' });
+                        }
+                        var info = { scope: '*' };
+                        done(null, user, info);
+                    });
+                    break;
+            }
         });
     }
 ));

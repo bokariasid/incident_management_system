@@ -7,7 +7,7 @@ var libs = process.cwd() + '/libs/';
 var log = console;
 
 var db = require(libs + 'db/mongoose');
-var User = require(libs + 'model/user');
+var Resolver = require(libs + 'model/resolver');
 var AccessToken = require(libs + 'model/accessToken');
 var RefreshToken = require(libs + 'model/refreshToken');
 
@@ -56,19 +56,20 @@ var generateTokens =  (data, done) => {
     });
 };
 
-// Exchange username & password for access token.
-aserver.exchange(oauth2orize.exchange.password((client, username, password, scope, done) => {
-	User.findOne({ username: username }, (err, user) => {
+// Exchange resolvername & password for access token.
+aserver.exchange(oauth2orize.exchange.password((client, resolvername, password, scope, done) => {
+	Resolver.findOne({ username: resolvername }, (err, resolver) => {
 		if (err) {
 			return done(err);
 		}
-		if (!user || !user.checkPassword(password)) {
+		if (!resolver || !resolver.checkPassword(password)) {
 			return done(null, false);
 		}
+		// console.log(resolver)
 		var model = {
-			userId: user.userId,
+			userId: resolver.userId,
 			clientId: client.clientId,
-			type:'user'
+			type:'resolver'
 		};
 		generateTokens(model, done);
 	});
@@ -84,13 +85,13 @@ aserver.exchange(oauth2orize.exchange.refreshToken((client, refreshToken, scope,
 		if (!token) {
 			return done(null, false);
 		}
-		User.findById(token.userId, function(err, user) {
+		Resolver.findById(token.userId, function(err, resolver) {
 			if (err) { return done(err); }
-			if (!user) { return done(null, false); }
+			if (!resolver) { return done(null, false); }
 			var model = {
-				userId: user.userId,
+				userId: resolver.userId,
 				clientId: client.clientId,
-				type:'user'
+				type:'resolver'
 			};
 			generateTokens(model, done);
 		});
@@ -104,7 +105,7 @@ aserver.exchange(oauth2orize.exchange.refreshToken((client, refreshToken, scope,
 // exchange middleware will be invoked to handle the request.  Clients must
 // authenticate when making requests to this endpoint.
 
-exports.token = [
+exports.resolver_token = [
 	passport.authenticate(['basic', 'oauth2-client-password'], { session: false }),
 	aserver.token(),
 	aserver.errorHandler()

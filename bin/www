@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 var debug = require('debug')('restapi');
+// setup the .env file mentioning the following variables for running the system.
+// PORT
+// MONGODB_URI
 require('dotenv').config();
 
 var libs = process.cwd() + '/libs/';

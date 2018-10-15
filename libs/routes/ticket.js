@@ -1,126 +1,91 @@
 var express = require('express');
-var passport = require('passport');
 var router = express.Router();
 
 var libs = process.cwd() + '/libs/';
 var log = console;
 var db = require(libs + 'db/mongoose');
-var Article = require(libs + 'model/ticket');
+var Ticket = require(libs + 'model/ticket');
 
-router.get('/', function(req, res) {
-
-	Article.find(function (err, articles) {
+// get a list of all the tickets available.
+router.get('/', (req, res) => {
+	Ticket.find((err, articles) => {
 		if (!err) {
-			return res.json(articles);
+			return res.status(200).json(articles).send();
 		} else {
-			res.statusCode = 500;
-
 			log.error('Internal error(%d): %s',res.statusCode,err.message);
-
-			return res.json({
-				error: 'Server error'
-			});
+			return res.status(500).json({error: 'Server error'}).send();
 		}
 	});
 });
 
-router.post('/', passport.authenticate('bearer', { session: false }), function(req, res) {
-
-	var article = new Article({
+// create a new ticket.
+router.post('/', (req, res) => {
+	var ticket = new Ticket({
 		title: req.body.title,
-		author: req.body.author,
+		user_id: req.body.user_id,
 		description: req.body.description,
-		images: req.body.images
+		status:-1
 	});
-
-	article.save(function (err) {
+	ticket.save((err) => {
 		if (!err) {
-			log.info("New article created with id: %s", article.id);
-			return res.json({
-				status: 'OK',
-				article:article
-			});
+			log.info("New ticket created with id: %s", ticket.id);
+			return res.status(200).json({status: 'OK',ticket:ticket}).send();
 		} else {
 			if(err.name === 'ValidationError') {
-				res.statusCode = 400;
-				res.json({
-					error: 'Validation error'
-				});
+				res.status(406).json({error: 'Validation error'}).send();
 			} else {
-				res.statusCode = 500;
-				res.json({
-					error: 'Server error'
-				});
+				res.status(500).json({error: 'Server error'}).send();
 			}
 			log.error('Internal error(%d): %s', res.statusCode, err.message);
 		}
 	});
 });
 
-router.get('/:id', passport.authenticate('bearer', { session: false }), function(req, res) {
-
-	Article.findById(req.params.id, function (err, article) {
-
-		if(!article) {
-			res.statusCode = 404;
-
-			return res.json({
-				error: 'Not found'
-			});
+// get a ticket with a particular id.
+router.get('/:id',(req, res) => {
+	Ticket.findById(req.params.id, (err, ticket) => {
+		if(!ticket) {
+			return res.status(404).json({error: 'Not found'}).send();
 		}
-
 		if (!err) {
-			return res.json({
-				status: 'OK',
-				article:article
-			});
+			return res.status(200).json({status: 'OK',ticket:ticket}).send();
 		} else {
-			res.statusCode = 500;
 			log.error('Internal error(%d): %s',res.statusCode,err.message);
-
-			return res.json({
-				error: 'Server error'
-			});
+			return res.status(500).json({error: 'Server error'}).send();
 		}
 	});
 });
 
-router.put('/:id', passport.authenticate('bearer', { session: false }), function (req, res){
-	var articleId = req.params.id;
-
-	Article.findById(articleId, function (err, article) {
-		if(!article) {
-			res.statusCode = 404;
-			log.error('Article with id: %s Not Found', articleId);
-			return res.json({
-				error: 'Not found'
-			});
+// update the ticket.
+router.put('/:id', (req, res) => {
+	let ticketId = req.params.id;
+	let requestBody = req.body;
+	Ticket.findById(ticketId, (err, ticket) => {
+		if(!ticket) {
+			log.error('Ticket with id: %s Not Found', ticketId);
+			return res.status(404).json({error: 'Not found'}).send();
 		}
-
-		article.title = req.body.title;
-		article.description = req.body.description;
-		article.author = req.body.author;
-		article.images = req.body.images;
-
-		article.save(function (err) {
+		if(requestBody.status == 0){
+			// ticket has been escalated.
+			if(ticket.remark.length == 0){
+				ticket.remark = [requestBody.remark];
+			} else {
+				ticket.remark.push(requestBody.remark);
+			}
+		} else if(requestBody.status == 1) {
+			// ticket has been resolved.
+			ticket.status = 1;
+		}
+		ticket.resolver_id = req.body.resolver_id;
+		ticket.save((err) => {
 			if (!err) {
-				log.info("Article with id: %s updated", article.id);
-				return res.json({
-					status: 'OK',
-					article:article
-				});
+				log.info("Ticket with id: %s updated", ticket.id);
+				return res.status(201).json({status: 'OK',ticket:ticket}).send();
 			} else {
 				if(err.name === 'ValidationError') {
-					res.statusCode = 400;
-					return res.json({
-						error: 'Validation error'
-					});
+					return res.status(400).json({error: 'Validation error'}).send();
 				} else {
-					res.statusCode = 500;
-
-					return res.json({
-						error: 'Server error'
-					});
+					return res.status(500).json({error: 'Server error'}).send();
 				}
 				log.error('Internal error (%d): %s', res.statusCode, err.message);
 			}

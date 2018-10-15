@@ -15,6 +15,10 @@ var mongoose = require('mongoose'),
             unique: true,
             required: true
         },
+        type: {
+            type: String,
+            required: true
+        },
         created: {
             type: Date,
             default: Date.now
